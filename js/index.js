@@ -22,11 +22,13 @@ const volumeBar = document.querySelector('#volumerange');
 const volumeBtn = document.querySelector('#volume');
 const volumeElem = document.querySelector('.volume');
 
+let data = [];
+
 async function getData(param) {
   const baseURL = 'http://localhost:8000/api/songs/';
   const URL = baseURL + param;
   const response = await fetch(URL);
-  const data = await response.json();
+  data = await response.json();
   displayData(data);
   searchText.style.color = '#000000';
 }
@@ -36,12 +38,10 @@ function displayData(data) {
   if (data.length > 0) {
     for (let i = 0; i < data.length; i++) {
       let node = document.createElement('li');
-      let aNode = document.createElement('a');
-      aNode.setAttribute('url', data[i].url);
-      aNode.setAttribute('name', data[i].name);
-      aNode.setAttribute('artist', data[i].artist);
-      aNode.innerHTML = data[i].name + ' - ' + data[i].artist;
-      node.appendChild(aNode);
+      let hyperlinkNode = document.createElement('a');
+      hyperlinkNode.setAttribute('data-code', i);
+      hyperlinkNode.innerHTML = data[i].name + ' - ' + data[i].artist;
+      node.appendChild(hyperlinkNode);
       listElem.append(node);
     }
   } else {
@@ -52,15 +52,16 @@ function displayData(data) {
 }
 
 function playMusic(event) {
-  if (event.target.getAttribute('url') !== null) {
+  const i = event.target.getAttribute('data-code');
+  if (i !== null) {
     if (!audio.paused) {
       togglePlayAndPause();
     }
     progressBar.style.width = '0%';
     randomCover();
-    songName.innerHTML = event.target.getAttribute('name');
-    songArtist.innerHTML = event.target.getAttribute('artist');
-    audio.src = event.target.getAttribute('url');
+    songName.innerHTML = data[i].name;
+    songArtist.innerHTML = data[i].artist;
+    audio.src = data[i].url;
   }
 }
 
@@ -119,8 +120,10 @@ submitButton.addEventListener('click', () => {
 listElem.addEventListener('click', (event) => playMusic(event));
 
 playBtn.addEventListener('click', () => {
-  audio.play();
-  togglePlayAndPause();
+  if (audio.src !== '') {
+    audio.play();
+    togglePlayAndPause(); 
+  }
 });
 
 pauseBtn.addEventListener('click', () => {
@@ -153,5 +156,6 @@ audio.addEventListener('timeupdate', () => {
 });
 
 audio.addEventListener('ended', togglePlayAndPause);
+audio.addEventListener('canplaythrough', updateTime);
 
 randomCover();
